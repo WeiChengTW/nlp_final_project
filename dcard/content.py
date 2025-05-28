@@ -7,33 +7,38 @@ from bs4 import BeautifulSoup
 import time
 import json
 import re
-import undetected_chromedriver as uc  # type: ignore
-
 import random
-
 
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.firefox.service import Service as FirefoxService
 
 
 def reOpenBrowser():
-
     options = FirefoxOptions()
-    options.add_argument("--incognito")
-    options.add_argument("--disable-popup-blocking")
-    options.add_argument("--disable-notifications")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-gpu")
-    options.add_argument("--disable-dev-shm-usage")
-    # 隨機 user-agent
     user_agents = [
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0",
         "Mozilla/5.0 (X11; Linux x86_64; rv:120.0) Gecko/20100101 Firefox/120.0",
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:115.0) Gecko/20100101 Firefox/115.0",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:102.0) Gecko/20100101 Firefox/102.0",
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:100.0) Gecko/20100101 Firefox/100.0",
     ]
+    # 強化指紋偽裝
     options.set_preference("general.useragent.override", random.choice(user_agents))
-    # 指定 geckodriver 路徑，假設已經在 PATH 中
+    options.set_preference("dom.webdriver.enabled", False)
+    options.set_preference("useAutomationExtension", False)
+    options.set_preference("media.navigator.enabled", False)
+    options.set_preference("media.peerconnection.enabled", False)
+    options.set_preference("privacy.trackingprotection.enabled", True)
+    options.set_preference("privacy.resistFingerprinting", True)
+    # 建議不要啟用 headless
     driver = webdriver.Firefox(options=options)
+    # 進一步移除 webdriver 屬性與指紋
+    driver.execute_script(
+        "Object.defineProperty(navigator, 'webdriver', {get: () => undefined});"
+        "Object.defineProperty(navigator, 'plugins', {get: () => [1,2,3,4,5]});"
+        "Object.defineProperty(navigator, 'languages', {get: () => ['zh-TW', 'zh', 'en-US', 'en']});"
+    )
     return driver
 
 
@@ -56,13 +61,28 @@ def remove_punctuation(text):
     return re.sub(r"[^\w\s]", " ", text)
 
 
-options = uc.ChromeOptions()
-# options.add_argument("--disable-blink-features=AutomationControlled")
-options.add_argument("--incognito")
-driver = uc.Chrome(
-    options=options,
-    driver_executable_path="chromedriver.exe",
-)
+def random_human_scroll(driver):
+    # 隨機滑動頁面，模擬人類行為
+    total_height = driver.execute_script("return document.body.scrollHeight")
+    for i in range(random.randint(2, 5)):
+        scroll_y = random.randint(0, total_height)
+        driver.execute_script(f"window.scrollTo(0, {scroll_y});")
+        time.sleep(random.uniform(0.5, 1.5))
+
+
+def is_turnstile_page(soup):
+    # 判斷是否遇到 Cloudflare Turnstile 驗證頁
+    if soup.find("iframe", {"title": "Just a moment..."}):
+        return True
+    if soup.find("div", string=re.compile("Cloudflare")) and soup.find(
+        "input", {"name": "cf-turnstile-response"}
+    ):
+        return True
+    return False
+
+
+# 初始化 Firefox driver
+driver = reOpenBrowser()
 with open("popular_list.json", "r", encoding="utf-8") as f:
     popular_list = json.load(f)
 
@@ -76,11 +96,25 @@ for item in popular_list:
     link = item.get("link")
     print(f"Processing {title}...")
     driver.get(link)
+    # time.sleep(random.uniform(2, 4))
+    time.sleep(10000)
+    random_human_scroll(driver)
+    soup = BeautifulSoup(driver.page_source, "html.parser")
+    # turnstile偵測
+    retry = 0
+    while is_turnstile_page(soup) and retry < 3:
+        print("偵測到 Cloudflare Turnstile，等待並重試...")
+        time.sleep(random.uniform(10, 20))
+        driver.refresh()
+        time.sleep(random.uniform(2, 4))
+        random_human_scroll(driver)
+        soup = BeautifulSoup(driver.page_source, "html.parser")
+        retry += 1
 
     time.sleep(3)
     for _ in range(scroll_times):
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        time.sleep(1)
+        time.sleep(random.uniform(1, 2))
     soup = BeautifulSoup(driver.page_source, "html.parser")
     count += 1
     if count % restart_every == 0:
@@ -109,10 +143,19 @@ for item in popular_list:
     for link in href_list[0:100]:
 
         driver.get(link)
-
-        # 等待頁面加載完成
-        time.sleep(1)
+        time.sleep(random.uniform(1, 2))
+        random_human_scroll(driver)
         soup = BeautifulSoup(driver.page_source, "html.parser")
+        retry = 0
+        while is_turnstile_page(soup) and retry < 3:
+            print("偵測到 Cloudflare Turnstile，等待並重試...")
+            time.sleep(random.uniform(10, 20))
+            driver.refresh()
+            time.sleep(random.uniform(1, 2))
+            random_human_scroll(driver)
+            soup = BeautifulSoup(driver.page_source, "html.parser")
+            retry += 1
+
         span_texts = []
         # 抓取文章標題
         title_tag = soup.find(
