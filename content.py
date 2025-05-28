@@ -12,46 +12,28 @@ import undetected_chromedriver as uc  # type: ignore
 import random
 
 
-from DrissionPage import ChromiumPage
-
-
-def bypass():
-    p = ChromiumPage()
-    p.get("https://nowsecure.nl/")
-    i = p.get_frame("@src^https://challenges.cloudflare.com/cdn-cgi")
-    e = i(".mark")
-    time.sleep(3)
-    e.click()
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from selenium.webdriver.firefox.service import Service as FirefoxService
 
 
 def reOpenBrowser():
-    options = uc.ChromeOptions()
-    # options.add_argument("--disable-blink-features=AutomationControlled")
+
+    options = FirefoxOptions()
     options.add_argument("--incognito")
-    # 嘗試隱藏自動化特徵
-    options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_argument("--disable-plugins-discovery")
-    options.add_argument("--disable-extensions")
-    options.add_argument("--disable-infobars")
     options.add_argument("--disable-popup-blocking")
-    options.add_argument("--profile-directory=Default")
     options.add_argument("--disable-notifications")
-    options.add_argument("--disable-application-cache")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-gpu")
     options.add_argument("--disable-dev-shm-usage")
     # 隨機 user-agent
     user_agents = [
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
-        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0",
+        "Mozilla/5.0 (X11; Linux x86_64; rv:120.0) Gecko/20100101 Firefox/120.0",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:115.0) Gecko/20100101 Firefox/115.0",
     ]
-    options.add_argument(f"--user-agent={random.choice(user_agents)}")
-    driver = uc.Chrome(
-        options=options,
-        driver_executable_path="chromedriver.exe",
-    )
+    options.set_preference("general.useragent.override", random.choice(user_agents))
+    # 指定 geckodriver 路徑，假設已經在 PATH 中
+    driver = webdriver.Firefox(options=options)
     return driver
 
 
