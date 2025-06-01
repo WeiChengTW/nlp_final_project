@@ -41,7 +41,7 @@ class GossipBot(object):
             query = input("User: ")
             print("MianBot: " + self.getResponse(query))
 
-    def getResponse(self, query, threshold=30):
+    def getResponse(self, query, threshold=50):
 
         title, index = self.matcher.match(query)
         sim = self.matcher.getSimilarity()
@@ -59,6 +59,8 @@ class GossipBot(object):
                 )
             )
             targetId = index % 1000
+            if not res[targetId]:
+                return random.choice(self.defaultResponse)
             candiates = self.evaluator.getBestResponse(res[targetId], topk=3)
             reply = self.randomPick(candiates)
             return reply
@@ -67,7 +69,7 @@ class GossipBot(object):
         try:
             answer = random.choice(answers)[0]
         except:
-            answer = "沒有資料"
+            answer = "內容可能含有不當詞彙，無法回應"
         return answer
 
     def randomTalks(self, num=100):

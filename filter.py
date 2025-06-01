@@ -306,6 +306,15 @@ class ArticleFilter(object):
                     tr.write(json.dumps(resSplit, indent=4, ensure_ascii=False))
                     resSplit = []
                 logging.info("已輸出 %d 篇回應" % sc)
+
+        if resSplit:
+            with open(
+                "data/processed/reply/" + str(int(sc / 1000)) + ".json",
+                "w",
+                encoding="utf-8",
+            ) as tr:
+                tr.write(json.dumps(resSplit, indent=4, ensure_ascii=False))
+                logging.info("已輸出最後一批回應，共 %d 篇" % sc)
         logging.info("回應輸出完成")
 
 
