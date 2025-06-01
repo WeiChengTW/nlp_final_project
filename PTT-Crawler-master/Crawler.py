@@ -179,7 +179,7 @@ class PttCrawler:
 
         try:
             with open(
-                f"data\processed\{filename}.json",
+                f"PTT-Crawler-master\data\{filename}.json",
                 "wb+",
             ) as op:
                 op.write(json.dumps(data, indent=4, ensure_ascii=False).encode("utf-8"))
