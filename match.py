@@ -1,6 +1,7 @@
 import json
 import os
 import random
+import jieba
 
 from responsesEvaluate import Evaluator
 from Matcher.fuzzyMatcher import FuzzyMatcher
@@ -44,7 +45,7 @@ def getMatcher(matcherType, removeStopWords=False):
 
 
 def TFIDFMatcher(removeStopWords=False):
-
+    jieba.load_userdict("jieba_dictionary/ptt_dic.txt")
     tfidf_matcher = KeywordMatcher(segLib="jieba", removeStopWords=removeStopWords)
     tfidf_matcher.loadTitles(path="data/Titles.txt")
     tfidf_matcher.initialize()

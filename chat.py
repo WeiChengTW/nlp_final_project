@@ -41,11 +41,12 @@ class GossipBot(object):
             query = input("User: ")
             print("MianBot: " + self.getResponse(query))
 
-    def getResponse(self, query, threshold=50):
+    def getResponse(self, query, threshold=30):
 
         title, index = self.matcher.match(query)
         sim = self.matcher.getSimilarity()
         if sim < threshold:
+            # 如果相似度低於閾值，則回應預設內容
             return random.choice(self.defaultResponse)
         else:
             res = json.load(
