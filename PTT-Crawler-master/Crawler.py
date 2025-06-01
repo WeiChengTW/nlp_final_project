@@ -3,6 +3,7 @@
 import json
 import requests
 import time
+import os
 
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString
@@ -201,6 +202,11 @@ class PttCrawler:
         crawl_range = range(start, end)
 
         for page in self.pages(board, crawl_range):
+            filename = board + str(start) + ".json"
+            if os.path.exists(filename):
+                print(f"{filename} 已存在，跳過此頁。")
+                start += 1
+                continue
             res = []
 
             for article in self.articles(page):
