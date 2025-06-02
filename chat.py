@@ -11,7 +11,7 @@ from responsesEvaluate import Evaluator
 def main():
 
     chatter = GossipBot()
-    # chatter.randomTalks(num=1000)
+    chatter.randomTalks(num=1000)
     chatter.chatTime()
 
 

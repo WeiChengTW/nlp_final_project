@@ -7,7 +7,9 @@ def main():
 
     Filter = ArticleFilter()
     Filter.load_processed_corpus()
-    # Filter.process_raw_data("data/raw/",is_dir=True,to_one_file=True,one_file_name="CorpusPatch2.json")
+    # Filter.process_raw_data(
+    # "data/raw/", is_dir=True, to_one_file=True, one_file_name="CorpusPatch2.json"
+    # )
     # Filter.merge_coprus()
 
     Filter.print_titles()
